@@ -1,0 +1,105 @@
+<!doctype html>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>API</title>
+	<script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+    <div>
+        <h3>Search for a book:</h3>
+        <input type="text" id="Search">
+    </div>
+    <div id="results"></div>
+<script type="text/javascript">
+"use strict";
+function formatAuthor(author){
+    if(author instanceof Array){
+        if(author.length===1){
+            return author[0];
+        }else if(author.length===2){
+            return author[0]+' & '+author[1];
+        }else if(author.length>2){
+            return author.slice(0,-1).reduce((x,y)=>x+', '+y)+', & '+author[author.length-1];
+        }
+    }
+    if(typeof author!=='string'){
+        return '';
+    }
+    var names=author.split(' ');
+    var lastName=names[names.length-1];
+    var firstInitials=names.slice(0,-1).reduce((x,y)=> x+y[0]+'.','');
+    var output=lastName+', '+firstInitials;
+    return output;
+}
+function concatAuthors(authors){
+    if(typeof authors==='undefined'||authors==null){console.log(authors)
+        return '';
+    }
+    if(authors instanceof Array){
+        authors=authors.map(formatAuthor);
+        if(authors.length===1){
+            return authors[0];
+        }else if(authors.length===2){
+            return authors[0]+' & '+authors[1];
+        }else if(authors>2){
+            return authors.slice(0,-1).reduce((x,y)=>x+', '+y)+' & '+authors[authors.length-1];
+        }
+    }
+    return formatAuthor(authors);
+}
+var test='Advanced Analytics with R and Tableau';
+var getUri=x=>'https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(x);
+function makeEntry(d){
+	var entries=Object.entries(d);
+	return d3.selectAll('d')
+}
+function concatTitle(book){
+    var output='';
+    if('title' in book){
+        output+=book.title;
+    }
+    if(output.length>0 && 'subtitle' in book){
+        output+=': ';
+    }
+    if('subtitle' in book){
+        output+=book.subtitle;
+    }
+    return output;
+}
+function pseudoAPA(book){
+    var publishedDate=new Date(Date.parse(book.publishedDate));
+    var output=concatAuthors(book.authors)+' ('+publishedDate.getFullYear()+'). <i>'+concatTitle(book)+'</i>. '+book.publisher+'.';
+    return output;
+}
+var resultsDiv=d3.select("#results");
+
+function init(data) {
+    data=data.map(d=>d.volumeInfo);
+console.log(data);
+resultsDiv.selectAll('*')
+        .remove();
+
+    var x=resultsDiv        
+        .append('ol')
+        .selectAll('li')
+        .data(data)
+        .enter()
+        .append('li')
+        .html(pseudoAPA);
+}
+
+var searchInput=d3.select('#Search');
+console.log(searchInput.node());
+var search=uri=>{
+    console.log(uri);
+    return d3.json(uri).then(json=>init(json.items));
+};
+searchInput.on('input',function(e){
+    var u=getUri(searchInput.node().value);
+    search(u);
+});
+
+</script>
+</body>
+</html>
